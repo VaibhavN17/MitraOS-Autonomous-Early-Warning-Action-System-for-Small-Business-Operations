@@ -14,7 +14,21 @@ import {
   CreateMerchantPayload
 } from '../types';
 
-const API_BASE = '/api/v1';
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    const trimmed = envUrl.trim().replace(/\/+$/, '');
+    return trimmed.endsWith('/api/v1') ? trimmed : `${trimmed}/api/v1`;
+  }
+  // When running in production (e.g. deployed on Vercel), point directly to Render backend
+  if (import.meta.env.PROD) {
+    return 'https://mitraos-autonomous-early-warning-action.onrender.com/api/v1';
+  }
+  // In local development, use Vite local proxy
+  return '/api/v1';
+};
+
+export const API_BASE = getApiBase();
 
 export const api = {
   // Auth

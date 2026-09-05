@@ -26,11 +26,11 @@ export const BusinessProvider: React.FC<{ children: ReactNode }> = ({ children }
   const [isPortfolioModalOpen, setIsPortfolioModalOpen] = useState(false);
   const [isAddBusinessModalOpen, setIsAddBusinessModalOpen] = useState(false);
 
-  const refreshMerchants = async () => {
+  const refreshMerchants = async (retryCount = 0) => {
     try {
       const data = await api.getMerchants();
-      setMerchants(data);
-      if (data.length > 0) {
+      if (data && data.length > 0) {
+        setMerchants(data);
         const savedId = localStorage.getItem(LOCAL_STORAGE_KEY);
         const match = data.find(m => m.id === savedId);
         if (match) {
@@ -39,13 +39,18 @@ export const BusinessProvider: React.FC<{ children: ReactNode }> = ({ children }
           setCurrentMerchantState(data[0]);
           localStorage.setItem(LOCAL_STORAGE_KEY, data[0].id);
         } else {
-          // Keep current merchant updated with fresh stats
           const updatedCurrent = data.find(m => m.id === currentMerchant.id) || data[0];
           setCurrentMerchantState(updatedCurrent);
         }
       }
     } catch (err) {
-      console.error('Failed to load businesses:', err);
+      console.warn('[MitraOS] Initial load attempt failed (backend may be spinning up):', err);
+      // Auto-retry up to 3 times with progressive backoff for Render cold starts
+      if (retryCount < 3) {
+        setTimeout(() => {
+          refreshMerchants(retryCount + 1);
+        }, 3000);
+      }
     } finally {
       setIsLoadingMerchants(false);
     }

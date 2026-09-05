@@ -42,16 +42,18 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-modal border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
-        
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div 
+        className="bg-white rounded-2xl max-w-lg w-full shadow-modal border border-slate-200 overflow-hidden animate-in zoom-in-95 duration-150"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/70">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 bg-slate-50/70">
           <div>
-            <span className="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full">
+            <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-md">
               DRAFT PURCHASE ORDER
             </span>
-            <h2 className="text-lg font-extrabold text-slate-900 mt-1.5">
+            <h2 className="text-lg font-extrabold text-slate-900 mt-1.5 font-display">
               Restock Purchase Order Review
             </h2>
           </div>
@@ -63,10 +65,10 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-5">
           
           {/* Supplier and SKU Meta */}
-          <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-4 space-y-2.5 text-xs">
+          <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-4 space-y-2 text-xs">
             <div className="flex items-center justify-between text-slate-600">
               <span className="flex items-center space-x-1.5 font-medium">
                 <Truck className="w-3.5 h-3.5 text-indigo-600" />
@@ -94,7 +96,7 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
           {/* Editable Quantity Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
               Order Quantity (Units)
             </label>
             <input
@@ -103,24 +105,24 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
               max={1000}
               value={quantity}
               onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-              className="w-full text-base font-extrabold border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+              className="w-full text-base font-extrabold border border-slate-300 rounded-xl p-2.5 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
             />
-            <p className="text-xs text-slate-500 mt-1.5">
+            <p className="text-[11px] text-slate-500 mt-1">
               Unit Wholesale Cost: <strong>{formatPaise(unitCostPaise)}</strong>
             </p>
           </div>
 
           {/* Impact Comparison Box */}
-          <div className="grid grid-cols-2 gap-3 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 text-xs">
+          <div className="grid grid-cols-2 gap-3 bg-indigo-50/50 border border-indigo-100 rounded-xl p-3.5 text-xs">
             <div>
               <span className="text-slate-500 block uppercase font-medium text-[10px]">Total Purchase Cost</span>
-              <span className="text-base font-extrabold text-slate-900 block mt-0.5">
+              <span className="text-base font-extrabold text-slate-900 block mt-0.5 metric-number">
                 {formatPaise(totalCostPaise)}
               </span>
             </div>
             <div className="border-l border-indigo-100 pl-3">
               <span className="text-slate-500 block uppercase font-medium text-[10px]">Revenue Protected</span>
-              <span className="text-base font-extrabold text-emerald-700 block mt-0.5">
+              <span className="text-base font-extrabold text-emerald-700 block mt-0.5 metric-number">
                 {formatPaise(preventedRevenuePaise)}
               </span>
             </div>
@@ -135,17 +137,17 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
           </div>
 
           {/* Buttons */}
-          <div className="flex items-center justify-end space-x-3 pt-2">
+          <div className="flex items-center justify-end space-x-2.5 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+              className="px-4 py-2 rounded-lg text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-all active:scale-95"
+              className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white shadow-xs transition-all active:scale-95"
             >
               <span>Approve & Dispatch PO</span>
               <ArrowRight className="w-4 h-4" />

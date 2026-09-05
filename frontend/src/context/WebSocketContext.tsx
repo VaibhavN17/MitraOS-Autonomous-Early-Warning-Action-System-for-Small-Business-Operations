@@ -18,10 +18,29 @@ export const WebSocketProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     let ws: WebSocket | null = null;
     let reconnectTimeout: any = null;
 
-    const connect = () => {
+    const getWebSocketUrl = () => {
+      const envWsUrl = import.meta.env.VITE_WS_URL;
+      if (envWsUrl) return envWsUrl.trim();
+
+      const envApiUrl = import.meta.env.VITE_API_URL;
+      if (envApiUrl) {
+        const wsBase = envApiUrl.trim().replace(/^http/, 'ws').replace(/\/+$/, '').replace(/\/api\/v1$/, '');
+        return `${wsBase}/ws`;
+      }
+
+      // When deployed in production (e.g. Vercel), connect to the Render backend WebSocket
+      if (import.meta.env.PROD) {
+        return 'wss://mitraos-autonomous-early-warning-action.onrender.com/ws';
+      }
+
+      // Local development fallback (proxied via Vite)
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.host;
-      const wsUrl = `${protocol}//${host}/ws`;
+      return `${protocol}//${host}/ws`;
+    };
+
+    const connect = () => {
+      const wsUrl = getWebSocketUrl();
 
       try {
         ws = new WebSocket(wsUrl);

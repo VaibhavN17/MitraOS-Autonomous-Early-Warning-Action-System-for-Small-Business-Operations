@@ -1,5 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { X, CheckCircle2, AlertTriangle, ArrowRight, TrendingDown, Layers, ChevronDown, ChevronUp, Clock, ShieldCheck, Loader2 } from 'lucide-react';
+import { 
+  X, 
+  CheckCircle2, 
+  AlertTriangle, 
+  ArrowRight, 
+  TrendingDown, 
+  Layers, 
+  ChevronDown, 
+  ChevronUp, 
+  Clock, 
+  ShieldCheck, 
+  Loader2,
+  Sparkles
+} from 'lucide-react';
 import { ResponsiveContainer, LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
 import { IssueItem, UnderlyingDataResponse } from '../types';
 import { api } from '../services/api';
@@ -41,22 +54,24 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full shadow-modal border border-slate-200 overflow-hidden my-8 animate-in fade-in zoom-in-95 duration-150">
-        
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-150">
+      <div 
+        className="bg-white rounded-2xl max-w-2xl w-full shadow-modal border border-slate-200 overflow-hidden my-8 animate-in zoom-in-95 duration-150"
+        onClick={e => e.stopPropagation()}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 sm:p-7 border-b border-slate-100 bg-slate-50/70">
+        <div className="flex items-center justify-between p-5 sm:p-6 border-b border-slate-100 bg-slate-50/70">
           <div>
-            <div className="flex items-center space-x-2.5 mb-1">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold ${
+            <div className="flex items-center space-x-2 mb-1">
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold ${
                 issue.severity === 'high' ? 'bg-red-100 text-red-700' : issue.severity === 'medium' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-800'
               }`}>
                 {issue.severity.toUpperCase()} RISK
               </span>
-              <span className="text-xs text-slate-500 font-medium">Signal ID: {issue.signal_id?.slice(0, 8)}</span>
+              <span className="text-xs text-slate-400 font-mono">Signal #{issue.signal_id?.slice(0, 8)}</span>
             </div>
-            <h2 className="text-xl font-extrabold text-slate-900">
-              Root-Cause Investigation & Remediation
+            <h2 className="text-lg sm:text-xl font-extrabold text-slate-900 font-display">
+              Root-Cause Diagnostic & Remediation
             </h2>
           </div>
           <button
@@ -67,19 +82,20 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
           </button>
         </div>
 
-        <div className="p-6 sm:p-7 space-y-6 max-h-[75vh] overflow-y-auto">
+        <div className="p-5 sm:p-6 space-y-5 max-h-[75vh] overflow-y-auto">
           
-          {/* Plain Language Summary */}
-          <div className="bg-indigo-50/50 border border-indigo-100 rounded-2xl p-5">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-700 mb-1.5">
-              Issue Explanation
+          {/* Explanation Summary Box */}
+          <div className="bg-indigo-50/60 border border-indigo-100 rounded-xl p-4 sm:p-5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-800 mb-1.5 flex items-center space-x-1.5">
+              <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+              <span>Plain-Language Synthesis</span>
             </h3>
-            <p className="text-slate-800 text-sm font-medium leading-relaxed">
+            <p className="text-slate-800 text-xs sm:text-sm font-medium leading-relaxed">
               {issue.explanation}
             </p>
-            <div className="mt-4 flex items-center justify-between text-xs text-slate-600 pt-3 border-t border-indigo-100/70">
-              <span className="font-semibold text-slate-600">Estimated Revenue at Risk:</span>
-              <span className="text-base font-extrabold text-slate-900">
+            <div className="mt-3.5 flex items-center justify-between text-xs text-slate-600 pt-3 border-t border-indigo-100">
+              <span className="font-semibold text-slate-600">Estimated Exposure:</span>
+              <span className="text-base sm:text-lg font-extrabold text-slate-900 metric-number">
                 {formatPaise(issue.estimated_impact_paise)}
               </span>
             </div>
@@ -87,19 +103,19 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
 
           {/* Root Cause Narrowing Step Chain */}
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3.5 flex items-center space-x-1.5">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center space-x-1.5">
               <Layers className="w-4 h-4 text-indigo-600" />
               <span>Root-Cause Narrowing Step Chain</span>
             </h3>
 
-            <div className="relative pl-7 space-y-4 before:absolute before:left-3 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
+            <div className="relative pl-6 space-y-3 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
               {issue.root_cause_chain?.map((step, idx) => (
                 <div key={idx} className="relative group">
-                  {/* Step bullet */}
-                  <div className="absolute -left-7 top-1 w-6 h-6 rounded-full bg-white border-2 border-indigo-600 flex items-center justify-center text-[11px] font-bold text-indigo-700 shadow-sm">
+                  {/* Step indicator */}
+                  <div className="absolute -left-6 top-1 w-5 h-5 rounded-full bg-white border-2 border-indigo-600 flex items-center justify-center text-[10px] font-bold text-indigo-700 shadow-xs">
                     {step.step}
                   </div>
-                  <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-4 hover:bg-slate-100/70 transition-colors">
+                  <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-3 hover:bg-slate-100/70 transition-colors">
                     <span className="text-xs font-bold text-slate-900 block mb-0.5">{step.title}</span>
                     <span className="text-xs text-slate-600 font-medium leading-relaxed">{step.detail}</span>
                   </div>
@@ -109,36 +125,36 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
           </div>
 
           {/* Expandable Underlying Data & Charts */}
-          <div className="border border-slate-200/80 rounded-2xl overflow-hidden shadow-subtle">
+          <div className="border border-slate-200 rounded-xl overflow-hidden shadow-xs">
             <button
               onClick={() => setShowCharts(!showCharts)}
-              className="w-full flex items-center justify-between p-4 bg-slate-50/80 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
+              className="w-full flex items-center justify-between p-3.5 bg-slate-50 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
             >
               <span>Underlying Signal Telemetry & Breakdown</span>
-              {showCharts ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+              {showCharts ? <ChevronUp className="w-4 h-4 text-slate-500" /> : <ChevronDown className="w-4 h-4 text-slate-500" />}
             </button>
 
             {showCharts && (
-              <div className="p-5 bg-white border-t border-slate-100">
+              <div className="p-4 bg-white border-t border-slate-100">
                 {loadingCharts ? (
                   <div className="flex items-center justify-center p-8 text-slate-400 text-xs">
-                    <Loader2 className="w-5 h-5 animate-spin mr-2 text-indigo-600" />
-                    <span>Loading telemetry data...</span>
+                    <Loader2 className="w-4 h-4 animate-spin mr-2 text-indigo-600" />
+                    <span>Loading telemetry stream...</span>
                   </div>
                 ) : underlyingData?.type === 'payment_failure_chart' ? (
                   <div>
-                    <h4 className="text-xs font-bold text-slate-800 mb-3">
+                    <h4 className="text-xs font-bold text-slate-800 mb-2">
                       Hourly Payment Failure Rate vs 7.5% Baseline
                     </h4>
-                    <div className="h-52 w-full">
+                    <div className="h-48 w-full">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={underlyingData.hourly_data}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                           <XAxis dataKey="hour" tick={{ fontSize: 11 }} />
                           <YAxis tick={{ fontSize: 11 }} />
-                          <Tooltip />
+                          <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
                           <Bar dataKey="failed" name="Failed Transactions" fill="#EF4444" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="success" name="Successful Transactions" fill="#10B981" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="successful" name="Successful Transactions" fill="#10B981" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -146,99 +162,71 @@ export const IssueDetailModal: React.FC<IssueDetailModalProps> = ({
                 ) : underlyingData?.type === 'inventory_depletion_chart' ? (
                   <div>
                     <h4 className="text-xs font-bold text-slate-800 mb-2">
-                      Stock Depletion Projection (SKU: {underlyingData.sku})
+                      Inventory Depletion Rate vs Supplier Lead Time (7 Days)
                     </h4>
-                    <p className="text-xs text-slate-500 mb-3">
-                      Safety Threshold: 10 units | Daily Burn: {underlyingData.daily_burn_rate} units/day
-                    </p>
-                    <div className="h-52 w-full">
+                    <div className="h-48 w-full">
                       <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={underlyingData.projection}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" />
+                        <LineChart data={underlyingData.projection || []}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                           <XAxis dataKey="day" tick={{ fontSize: 11 }} />
                           <YAxis tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="stock" stroke="#F59E0B" strokeWidth={2.5} name="Projected Units" dot={{ r: 4 }} />
-                          <Line type="monotone" dataKey="safety_threshold" stroke="#EF4444" strokeDasharray="4 4" name="Reorder Point" />
+                          <Tooltip contentStyle={{ fontSize: '11px', borderRadius: '8px' }} />
+                          <Line type="monotone" dataKey="stock" name="Stock Level (Units)" stroke="#F59E0B" strokeWidth={2} dot={{ r: 3 }} />
                         </LineChart>
                       </ResponsiveContainer>
                     </div>
                   </div>
-                ) : underlyingData?.type === 'churn_cohort_table' ? (
-                  <div>
-                    <h4 className="text-xs font-bold text-slate-800 mb-3">
-                      High-LTV Customer Cohort (Inactive &gt; 45 Days)
-                    </h4>
-                    <div className="overflow-x-auto">
-                      <table className="w-full text-left text-xs">
-                        <thead className="bg-slate-50 border-b border-slate-200">
-                          <tr>
-                            <th className="p-2.5 font-bold text-slate-600">Customer</th>
-                            <th className="p-2.5 font-bold text-slate-600">Lifetime Value</th>
-                            <th className="p-2.5 font-bold text-slate-600">Days Inactive</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                          {underlyingData.customers?.map((c, i) => (
-                            <tr key={i} className="hover:bg-slate-50">
-                              <td className="p-2.5 font-semibold text-slate-900">{c.name}</td>
-                              <td className="p-2.5 text-slate-700 font-bold">{formatPaise(c.ltv_paise)}</td>
-                              <td className="p-2.5 text-red-600 font-bold">{c.days_inactive} days</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
                 ) : (
-                  <p className="text-xs text-slate-500">Structured telemetry verified against merchant signals.</p>
+                  <div className="text-xs text-slate-500 py-2">
+                    Telemetry metrics compiled and validated against historical 30-day merchant baseline.
+                  </div>
                 )}
               </div>
             )}
           </div>
 
           {/* Recommended Action Box */}
-          <div className="bg-slate-900 text-white rounded-2xl p-5 space-y-3.5 shadow-md">
+          <div className="bg-slate-900 text-white rounded-xl p-5 space-y-3 shadow-sm">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-indigo-300 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-indigo-300 uppercase tracking-wider">
                 Autonomous Remediation Action Plan
               </span>
               <div className="flex items-center space-x-1.5 text-xs text-slate-400">
-                <ShieldCheck className="w-4 h-4 text-indigo-400" />
-                <span>Bounded Autonomy Verified</span>
+                <ShieldCheck className="w-3.5 h-3.5 text-indigo-400" />
+                <span>Bounded Policy Enforced</span>
               </div>
             </div>
 
-            <div className="text-sm font-semibold text-slate-100 leading-relaxed">
-              {issue.action?.action_type === 'retry_payment' && 'Automated Razorpay Retry Batch + 1-Click WhatsApp Payment Link Dispatch'}
-              {issue.action?.action_type === 'create_purchase_order' && 'Issue Supplier Purchase Order to Restock Critical Units'}
-              {issue.action?.action_type === 'send_reengagement_campaign' && 'Dispatch VIP 15% Incentive Re-engagement Campaign'}
+            <div className="text-xs sm:text-sm font-semibold text-slate-100 leading-relaxed">
+              {issue.action?.action_type === 'retry_payment' && 'Execute Soft Retry Wave on Failed Razorpay Links + 1-Click WhatsApp Recovery'}
+              {issue.action?.action_type === 'create_purchase_order' && 'Issue Automated Restock Purchase Order to Authorized Vendor'}
+              {issue.action?.action_type === 'send_reengagement_campaign' && 'Dispatch Targeted VIP 15% Incentive Re-engagement Campaign'}
             </div>
 
             {isCompleted ? (
-              <div className="bg-emerald-950/80 border border-emerald-800 rounded-xl p-3.5 text-xs text-emerald-300 flex items-center space-x-2">
+              <div className="bg-emerald-950/80 border border-emerald-800 rounded-lg p-3 text-xs text-emerald-300 flex items-center space-x-2">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Remediation action executed successfully. Revenue recovery logged.</span>
+                <span>Remediation action executed successfully. Capital recovery logged.</span>
               </div>
             ) : isExecuting ? (
-              <div className="bg-slate-800 border border-slate-700 rounded-xl p-3.5 text-xs text-slate-200 flex items-center space-x-2">
-                <Loader2 className="w-4 h-4 animate-spin mr-1.5 text-indigo-400" />
+              <div className="bg-slate-800 border border-slate-700 rounded-lg p-3 text-xs text-slate-200 flex items-center space-x-2">
+                <Loader2 className="w-4 h-4 animate-spin text-indigo-400" />
                 <span>Executing remediation action via Razorpay APIs...</span>
               </div>
             ) : (
-              <div className="flex items-center justify-end space-x-3 pt-2">
+              <div className="flex items-center justify-end space-x-2.5 pt-2">
                 <button
                   onClick={() => onReject(issue)}
-                  className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
+                  className="px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
                 >
-                  Dismiss / Reject
+                  Dismiss
                 </button>
                 <button
                   onClick={() => onApprove(issue)}
-                  className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow transition-all active:scale-95"
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white shadow-xs transition-all active:scale-95"
                 >
-                  <span>Approve & Execute Fix</span>
-                  <ArrowRight className="w-4 h-4" />
+                  <span>Approve & Execute</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
             )}

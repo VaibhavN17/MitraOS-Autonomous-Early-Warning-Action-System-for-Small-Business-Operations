@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Navbar } from './components/Navbar';
+import { Sidebar } from './components/Sidebar';
+import { TopNav } from './components/TopNav';
+import { CommandPalette } from './components/CommandPalette';
 import { MorningBrief } from './components/MorningBrief';
 import { IssueDetailModal } from './components/IssueDetailModal';
 import { PurchaseOrderModal } from './components/PurchaseOrderModal';
@@ -16,7 +18,7 @@ import { api } from './services/api';
 import { useWebSocket } from './context/WebSocketContext';
 import { BusinessProvider, useBusiness } from './context/BusinessContext';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { Sparkles, X, Zap, Loader2 } from 'lucide-react';
+import { Sparkles, X, Zap, Loader2, ShieldCheck } from 'lucide-react';
 
 const MainApp: React.FC = () => {
   const { isAuthenticated, isLoadingAuth: authLoading } = useAuth();
@@ -24,6 +26,8 @@ const MainApp: React.FC = () => {
   const [activeTab, setActiveTab] = useState('brief');
   const [briefData, setBriefData] = useState<MorningBriefData | null>(null);
   const [loadingBrief, setLoadingBrief] = useState(true);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   
   // Modals & Drawers
   const [selectedIssueForDetail, setSelectedIssueForDetail] = useState<IssueItem | null>(null);
@@ -66,6 +70,22 @@ const MainApp: React.FC = () => {
       }
     }
   }, [lastMessage]);
+
+  // Global keyboard shortcuts (Cmd+K for search, Alt+M for chat)
+  useEffect(() => {
+    const handleGlobalKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsSearchOpen(prev => !prev);
+      }
+      if (e.altKey && e.key.toLowerCase() === 'm') {
+        e.preventDefault();
+        setIsChatOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeyDown);
+    return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+  }, []);
 
   // Actions
   const handleApproveIssue = async (issue: IssueItem) => {
@@ -113,7 +133,7 @@ const MainApp: React.FC = () => {
         <h2 className="text-base font-bold font-display tracking-tight mb-1">MitraOS Operations Suite</h2>
         <div className="flex items-center space-x-2 text-xs text-slate-400">
           <Loader2 className="w-3.5 h-3.5 animate-spin text-indigo-400" />
-          <span>Synchronizing workspace...</span>
+          <span>Connecting to autonomous backend...</span>
         </div>
       </div>
     );
@@ -125,87 +145,110 @@ const MainApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col selection:bg-indigo-600 selection:text-white">
+    <div className="min-h-screen bg-slate-50/70 flex selection:bg-indigo-600 selection:text-white">
       
-      {/* Live Toast Notification Banner */}
-      {toastMessage && (
-        <div className="bg-slate-900 text-white px-4 py-2.5 shadow-md flex items-center justify-between text-xs animate-in slide-in-from-top duration-150 z-50 border-b border-slate-800">
-          <div className="flex items-center space-x-2">
-            <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
-            <span className="font-bold text-amber-300">Live Agent Event:</span>
-            <span>{toastMessage}</span>
-          </div>
-          <button
-            onClick={() => setToastMessage(null)}
-            className="text-slate-400 hover:text-white p-0.5 rounded"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
-
-      {/* Top Navigation */}
-      <Navbar
+      {/* Persistent Left Sidebar (Desktop) */}
+      <Sidebar
         activeTab={activeTab}
         setActiveTab={setActiveTab}
+        isCollapsed={isSidebarCollapsed}
+        setIsCollapsed={setIsSidebarCollapsed}
         onOpenChat={() => setIsChatOpen(true)}
-        onResetData={() => loadMorningBrief()}
+        pendingIssuesCount={briefData?.risk_counts?.high ?? 0}
       />
 
-      {/* Main Content Area - Disciplined padding for laptop viewports & mobile clearance */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-6 pb-20 md:pb-6">
-        {activeTab === 'brief' && (
-          <MorningBrief
-            data={briefData}
-            loading={loadingBrief}
-            onRefresh={loadMorningBrief}
-            onInspectIssue={(issue) => setSelectedIssueForDetail(issue)}
-            onApproveIssue={handleApproveIssue}
-            onOpenDraftModal={(issue) => setSelectedIssueForPO(issue)}
-            onOpenSimulator={() => setActiveTab('simulator')}
-          />
-        )}
-
-        {activeTab === 'metrics' && (
-          <MetricsDashboard onRefreshTrigger={refreshTrigger} />
-        )}
-
-        {activeTab === 'catalog' && (
-          <CatalogView />
-        )}
-
-        {activeTab === 'simulator' && (
-          <LiveSimulator
-            onAnomalyInjected={() => {
-              loadMorningBrief();
-              setRefreshTrigger(prev => prev + 1);
-            }}
-            onResetComplete={() => {
-              loadMorningBrief();
-              setRefreshTrigger(prev => prev + 1);
-            }}
-          />
-        )}
-
-        {activeTab === 'audit' && (
-          <AuditLogTable />
-        )}
-      </main>
-
-      {/* Desktop Subtle Footer */}
-      <footer className="hidden md:block border-t border-slate-200/80 bg-white py-4 mt-auto">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-[11px] text-slate-500">
-          <div className="flex items-center space-x-1.5 font-medium">
-            <span className="font-extrabold text-slate-900 tracking-tight font-display">MitraOS</span>
-            <span>— Autonomous Early-Warning & Action System for Small Businesses</span>
+      {/* Main Column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        
+        {/* Live Toast Event Banner */}
+        {toastMessage && (
+          <div className="bg-slate-900 text-white px-4 py-2.5 shadow-md flex items-center justify-between text-xs animate-in slide-in-from-top duration-150 z-50 border-b border-slate-800">
+            <div className="flex items-center space-x-2">
+              <Zap className="w-3.5 h-3.5 text-amber-400 animate-pulse shrink-0" />
+              <span className="font-bold text-amber-300">Live Agent Event:</span>
+              <span className="truncate">{toastMessage}</span>
+            </div>
+            <button
+              onClick={() => setToastMessage(null)}
+              className="text-slate-400 hover:text-white p-0.5 rounded ml-2 shrink-0"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          <div className="flex items-center space-x-2">
-            <span>Razorpay Buildathon 2026</span>
-            <span>•</span>
-            <span className="font-semibold text-slate-700">Bounded Autonomy Protocol</span>
+        )}
+
+        {/* Top Navigation Bar */}
+        <TopNav
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          onOpenChat={() => setIsChatOpen(true)}
+          onOpenSearch={() => setIsSearchOpen(true)}
+        />
+
+        {/* Main Content Area */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
+          {activeTab === 'brief' && (
+            <MorningBrief
+              data={briefData}
+              loading={loadingBrief}
+              onRefresh={loadMorningBrief}
+              onInspectIssue={(issue) => setSelectedIssueForDetail(issue)}
+              onApproveIssue={handleApproveIssue}
+              onOpenDraftModal={(issue) => setSelectedIssueForPO(issue)}
+              onOpenSimulator={() => setActiveTab('simulator')}
+            />
+          )}
+
+          {activeTab === 'metrics' && (
+            <MetricsDashboard onRefreshTrigger={refreshTrigger} />
+          )}
+
+          {activeTab === 'catalog' && (
+            <CatalogView />
+          )}
+
+          {activeTab === 'simulator' && (
+            <LiveSimulator
+              onAnomalyInjected={() => {
+                loadMorningBrief();
+                setRefreshTrigger(prev => prev + 1);
+              }}
+              onResetComplete={() => {
+                loadMorningBrief();
+                setRefreshTrigger(prev => prev + 1);
+              }}
+            />
+          )}
+
+          {activeTab === 'audit' && (
+            <AuditLogTable />
+          )}
+        </main>
+
+        {/* Desktop Subtle Footer */}
+        <footer className="hidden md:block border-t border-slate-200/80 bg-white py-4 mt-auto">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between text-[11px] text-slate-500">
+            <div className="flex items-center space-x-1.5 font-medium">
+              <span className="font-extrabold text-slate-900 tracking-tight font-display">MitraOS</span>
+              <span>— Autonomous Early-Warning & Action System for Small Businesses</span>
+            </div>
+            <div className="flex items-center space-x-2">
+              <span>Razorpay Buildathon 2026</span>
+              <span>•</span>
+              <span className="font-semibold text-slate-700">Bounded Autonomy Protocol</span>
+            </div>
           </div>
-        </div>
-      </footer>
+        </footer>
+
+      </div>
+
+      {/* Global Command Palette */}
+      <CommandPalette
+        isOpen={isSearchOpen}
+        onClose={() => setIsSearchOpen(false)}
+        onSelectTab={(tab) => setActiveTab(tab)}
+        onOpenChat={() => setIsChatOpen(true)}
+      />
 
       {/* Modals & Drawers */}
       <IssueDetailModal
