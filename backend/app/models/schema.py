@@ -30,6 +30,7 @@ class Merchant(Base):
     audit_logs = relationship("AuditLog", back_populates="merchant", cascade="all, delete-orphan")
     webhook_events = relationship("WebhookEvent", back_populates="merchant", cascade="all, delete-orphan")
     users = relationship("User", back_populates="merchant", cascade="all, delete-orphan")
+    ground_truth_labels = relationship("GroundTruthLabel", back_populates="merchant", cascade="all, delete-orphan")
 
 class Product(Base):
     __tablename__ = "products"
@@ -219,3 +220,5 @@ class GroundTruthLabel(Base):
     is_detected = Column(Boolean, default=False)
     detected_signal_id = Column(String(36), nullable=True)
     created_at = Column(DateTime(timezone=True), default=utc_now, nullable=False)
+
+    merchant = relationship("Merchant", back_populates="ground_truth_labels")

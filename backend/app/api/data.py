@@ -97,6 +97,7 @@ def create_new_merchant(req: CreateMerchantRequest, db: Session = Depends(get_db
         created_at=now
     )
     db.add(merchant)
+    db.flush()
 
     # Store in category map
     CATEGORY_MAP[req.name] = (req.category, req.avatar_color or "indigo")

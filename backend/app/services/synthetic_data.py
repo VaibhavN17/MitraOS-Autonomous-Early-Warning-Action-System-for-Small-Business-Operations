@@ -128,6 +128,7 @@ def seed_one_merchant(db: Session, spec: Dict[str, Any], now: datetime) -> str:
         created_at=now - timedelta(days=90)
     )
     db.add(merchant)
+    db.flush()
 
     # 2. Owner User
     owner_user = User(
