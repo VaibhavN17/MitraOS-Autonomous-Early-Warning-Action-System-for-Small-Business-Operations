@@ -8,12 +8,15 @@ router = APIRouter(prefix="/audit", tags=["audit"])
 
 @router.get("")
 def get_audit_logs(
+    merchant_id: Optional[str] = None,
     limit: int = Query(50, le=200),
     entity_type: Optional[str] = None,
     actor: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     query = db.query(AuditLog)
+    if merchant_id:
+        query = query.filter(AuditLog.merchant_id == merchant_id)
     if entity_type:
         query = query.filter(AuditLog.entity_type == entity_type)
     if actor:
@@ -24,6 +27,7 @@ def get_audit_logs(
     return [
         {
             "id": l.id,
+            "merchant_id": l.merchant_id,
             "entity_type": l.entity_type,
             "entity_id": l.entity_id,
             "event": l.event,

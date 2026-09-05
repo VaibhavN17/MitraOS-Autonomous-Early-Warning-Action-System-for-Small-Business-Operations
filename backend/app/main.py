@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.database import Base, engine, SessionLocal
 from app.core.websockets import manager
-from app.services.synthetic_data import seed_synthetic_merchant_data
+from app.services.synthetic_data import seed_synthetic_merchant_data, MERCHANTS_SPEC
 from app.services.detection import DetectionEngine
 from app.services.reasoning import ReasoningEngine
 from app.services.action_planner import ActionPlanner
@@ -34,17 +34,13 @@ async def lifespan(app: FastAPI):
     db = SessionLocal()
     try:
         from app.models.schema import Merchant
-        merchant = db.query(Merchant).first()
-        if not merchant:
-            logger.info("Empty database detected. Seeding synthetic merchant dataset with ground truth anomalies...")
-            merchant_id = seed_synthetic_merchant_data(db)
-            logger.info("Running initial detection, reasoning and action planning pipeline...")
-            signals = DetectionEngine.run_detection_pipeline(db, merchant_id)
-            issues = ReasoningEngine.reason_over_signals(db, merchant_id, signals)
-            actions = ActionPlanner.plan_actions_for_issues(db, merchant_id, issues)
-            logger.info(f"MitraOS ready! Generated {len(signals)} signals, {len(issues)} issues, {len(actions)} actions.")
+        merchants = db.query(Merchant).all()
+        if len(merchants) < len(MERCHANTS_SPEC):
+            logger.info("Seeding multi-tenant synthetic merchant datasets with ground truth anomalies...")
+            seed_synthetic_merchant_data(db)
+            logger.info("Multi-tenant businesses initialized successfully.")
         else:
-            logger.info(f"Existing merchant found: {merchant.name}")
+            logger.info(f"Existing {len(merchants)} merchants found in database.")
     finally:
         db.close()
     

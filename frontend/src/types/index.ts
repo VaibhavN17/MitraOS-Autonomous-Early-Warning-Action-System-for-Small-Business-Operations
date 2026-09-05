@@ -1,6 +1,42 @@
 export interface MerchantInfo {
   id: string;
   name: string;
+  category?: string;
+  razorpay_account_id?: string;
+  avatar_color?: 'emerald' | 'purple' | 'amber' | 'blue' | string;
+  active_issues_count?: number;
+  high_risk_count?: number;
+  yesterday_revenue_paise?: number;
+  total_products?: number;
+  total_customers?: number;
+  created_at?: string;
+}
+
+export interface UserProfile {
+  user_id: string;
+  merchant_id: string;
+  email: string;
+  role: string;
+  merchant_name: string;
+  full_name?: string;
+}
+
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user_id: string;
+  merchant_id: string;
+  email: string;
+  role: string;
+  merchant_name: string;
+}
+
+export interface CreateMerchantPayload {
+  name: string;
+  category: string;
+  razorpay_account_id?: string;
+  avatar_color?: string;
+  auto_spend_limit_paise?: number;
 }
 
 export interface RootCauseStep {
@@ -129,6 +165,7 @@ export interface ChatMessage {
 
 export interface AuditLogItem {
   id: string;
+  merchant_id?: string;
   entity_type: string;
   entity_id: string;
   event: string;

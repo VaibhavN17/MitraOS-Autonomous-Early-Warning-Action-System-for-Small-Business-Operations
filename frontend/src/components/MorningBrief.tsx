@@ -1,5 +1,5 @@
 import React from 'react';
-import { Sparkles, CheckCircle2, TrendingUp, ShoppingBag, DollarSign, AlertCircle, RefreshCw, Zap } from 'lucide-react';
+import { Sparkles, CheckCircle2, TrendingUp, ShoppingBag, DollarSign, AlertCircle, RefreshCw, Zap, ArrowRight, ShieldCheck } from 'lucide-react';
 import { MorningBriefData, IssueItem } from '../types';
 import { IssueCard } from './IssueCard';
 
@@ -25,8 +25,8 @@ export const MorningBrief: React.FC<MorningBriefProps> = ({
   if (loading || !data) {
     return (
       <div className="flex flex-col items-center justify-center p-16 space-y-3">
-        <RefreshCw className="w-8 h-8 text-brand-600 animate-spin" />
-        <p className="text-sm font-medium text-slate-500">Loading daily Morning Brief & telemetry...</p>
+        <RefreshCw className="w-6 h-6 text-indigo-600 animate-spin" />
+        <p className="text-xs font-semibold text-slate-500">Loading daily Morning Brief & operational telemetry...</p>
       </div>
     );
   }
@@ -35,45 +35,53 @@ export const MorningBrief: React.FC<MorningBriefProps> = ({
     return `₹${(paise / 100).toLocaleString('en-IN')}`;
   };
 
+  const totalRevenueAtRisk = (data.active_issues || []).reduce((acc, curr) => acc + (curr.estimated_impact_paise || 0), 0);
+
   return (
-    <div className="space-y-6 animate-in fade-in duration-150">
+    <div className="space-y-4 animate-in fade-in duration-200">
       
-      {/* Morning Brief Top Hero Header */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 glow-card">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      {/* Executive Overview Banner - Crisp, space-disciplined & responsive */}
+      <div className="bg-white rounded-xl border border-slate-200/90 p-4 sm:p-5 shadow-sm">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           
           <div>
-            <div className="flex items-center space-x-2 text-xs font-bold text-brand-700 bg-brand-50 px-2.5 py-1 rounded-md w-fit border border-brand-100">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>DAILY MORNING BRIEF</span>
+            <div className="flex items-center space-x-2 text-[11px] font-bold text-indigo-700 bg-indigo-50 px-2.5 py-0.5 rounded-md w-fit border border-indigo-100">
+              <Sparkles className="w-3 h-3 text-indigo-600" />
+              <span>OVERNIGHT INTELLIGENCE</span>
             </div>
-            <h1 className="text-2xl font-extrabold text-slate-900 mt-1 tracking-tight">
-              {data.date}
-            </h1>
-            <p className="text-xs text-slate-500 font-medium">
-              Autonomous overnight analysis for {data.merchant.name}
-            </p>
+            <div className="flex items-baseline space-x-2 mt-1">
+              <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                {data.date}
+              </h1>
+              <span className="text-xs text-slate-500 font-medium">
+                for <strong className="text-slate-800 font-semibold">{data.merchant.name}</strong>
+              </span>
+            </div>
           </div>
 
-          {/* Quick Metrics Bar */}
-          <div className="grid grid-cols-3 gap-3 bg-slate-50 p-3 rounded-xl border border-slate-100">
+          {/* Inline Yesterday KPI Strip */}
+          <div className="flex items-center space-x-3 sm:space-x-6 bg-slate-50 px-3.5 py-2 rounded-xl border border-slate-200/80 shrink-0">
             <div>
-              <span className="text-[11px] text-slate-500 font-semibold uppercase block">Yesterday's Revenue</span>
-              <span className="text-lg font-extrabold text-slate-900">
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Yesterday Revenue</span>
+              <span className="text-sm sm:text-base font-extrabold text-slate-900 block">
                 {formatPaise(data.yesterday_summary.revenue_paise)}
               </span>
             </div>
 
-            <div className="border-l border-slate-200 pl-3">
-              <span className="text-[11px] text-slate-500 font-semibold uppercase block">Orders Processed</span>
-              <span className="text-lg font-extrabold text-slate-900">
+            <div className="h-7 w-[1px] bg-slate-200" />
+
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Orders</span>
+              <span className="text-sm sm:text-base font-extrabold text-slate-900 block">
                 {data.yesterday_summary.orders_count}
               </span>
             </div>
 
-            <div className="border-l border-slate-200 pl-3">
-              <span className="text-[11px] text-slate-500 font-semibold uppercase block">Avg Order Value</span>
-              <span className="text-lg font-extrabold text-slate-900">
+            <div className="h-7 w-[1px] bg-slate-200" />
+
+            <div>
+              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Avg Order (AOV)</span>
+              <span className="text-sm sm:text-base font-extrabold text-slate-900 block">
                 {formatPaise(data.yesterday_summary.avg_order_value_paise)}
               </span>
             </div>
@@ -81,65 +89,66 @@ export const MorningBrief: React.FC<MorningBriefProps> = ({
 
         </div>
 
-        {/* Risk Counter Pills */}
-        <div className="mt-5 pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center space-x-3">
-            <span className="font-semibold text-slate-700">Flagged Risks Awaiting Action:</span>
-            <div className="flex items-center space-x-2">
-              <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded-full font-bold border border-red-200">
-                {data.risk_counts.high} High
-              </span>
-              <span className="bg-amber-50 text-amber-700 px-2 py-0.5 rounded-full font-bold border border-amber-200">
-                {data.risk_counts.medium} Medium
-              </span>
-              <span className="bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-bold border border-emerald-200">
-                {data.risk_counts.low} Low
-              </span>
-            </div>
+        {/* Actionable Risk Counters Strip */}
+        <div className="mt-3.5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+            <span className="font-semibold text-slate-600 text-xs">Action Items Requiring Approval:</span>
+            <span className="bg-red-50 text-red-700 px-2.5 py-0.5 rounded-full font-bold border border-red-200 flex items-center space-x-1 text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+              <span>{data.risk_counts.high} High</span>
+            </span>
+            <span className="bg-amber-50 text-amber-800 px-2.5 py-0.5 rounded-full font-bold border border-amber-200 flex items-center space-x-1 text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              <span>{data.risk_counts.medium} Medium</span>
+            </span>
+            <span className="bg-emerald-50 text-emerald-800 px-2.5 py-0.5 rounded-full font-bold border border-emerald-200 flex items-center space-x-1 text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              <span>{data.risk_counts.low} Low</span>
+            </span>
           </div>
 
           <div className="flex items-center space-x-2">
             <button
-              onClick={onOpenSimulator}
-              className="inline-flex items-center space-x-1 text-xs font-semibold text-amber-700 bg-amber-50 hover:bg-amber-100 px-3 py-1.5 rounded-lg border border-amber-200 transition-colors"
-            >
-              <Zap className="w-3.5 h-3.5 text-amber-600" />
-              <span>Simulate Live Anomaly (Judge Demo)</span>
-            </button>
-
-            <button
               onClick={onRefresh}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-              title="Refresh telemetry"
+              className="inline-flex items-center space-x-1.5 text-xs text-slate-600 hover:text-slate-900 font-semibold px-2.5 py-1 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw className="w-3 h-3" />
+              <span>Sync</span>
+            </button>
+            <button
+              onClick={onOpenSimulator}
+              className="inline-flex items-center space-x-1 text-xs text-indigo-600 hover:text-indigo-700 font-bold px-2.5 py-1 rounded-lg bg-indigo-50 border border-indigo-100 hover:bg-indigo-100/70 transition-colors"
+            >
+              <Zap className="w-3 h-3 text-indigo-600" />
+              <span>Simulate Incident</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Active Issues Section */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-base font-bold text-slate-900">
-            Actionable Issues Detected ({data.active_issues.length})
-          </h2>
-          <span className="text-xs text-slate-500">
-            Ranked by revenue risk severity
-          </span>
-        </div>
-
-        {data.active_issues.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-8 text-center space-y-2">
-            <CheckCircle2 className="w-10 h-10 text-emerald-600 mx-auto" />
-            <h3 className="text-sm font-bold text-slate-900">All Operations Nominal</h3>
-            <p className="text-xs text-slate-500 max-w-sm mx-auto">
-              No active revenue degradation signals detected. All flagged items have been handled.
-            </p>
+      {/* Main Grid: Responsive 2-column layout on laptop/desktop; scales fluidly on larger displays */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 items-start">
+        
+        {/* Left Side: Priority Anomaly Feed (8 cols on desktop) */}
+        <div className="lg:col-span-8 space-y-3">
+          <div className="flex items-center justify-between px-1">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center space-x-1.5">
+              <span>Operational Risk Diagnostic Feed</span>
+              <span className="bg-slate-200 text-slate-700 text-[10px] px-1.5 py-0.2 rounded font-bold">
+                {(data.active_issues || []).length}
+              </span>
+            </h2>
+            <span className="text-[11px] text-slate-400 font-medium">Click card to inspect root causes</span>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 gap-4">
-            {data.active_issues.map((issue) => (
+
+          {!data.active_issues || data.active_issues.length === 0 ? (
+            <div className="bg-white rounded-xl border border-slate-200 p-8 text-center">
+              <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto mb-2" />
+              <h3 className="font-bold text-sm text-slate-900">All Operations Clear</h3>
+              <p className="text-xs text-slate-500 mt-1">No anomalies detected across Razorpay payments, inventory, or customers.</p>
+            </div>
+          ) : (
+            data.active_issues.map((issue) => (
               <IssueCard
                 key={issue.id}
                 issue={issue}
@@ -147,48 +156,77 @@ export const MorningBrief: React.FC<MorningBriefProps> = ({
                 onApprove={onApproveIssue}
                 onOpenDraftModal={onOpenDraftModal}
               />
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Handled Today Section */}
-      {data.handled_today && data.handled_today.length > 0 && (
-        <div className="space-y-3 pt-4">
-          <h2 className="text-sm font-bold text-slate-700 flex items-center space-x-2">
-            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-            <span>Handled & Executed Today ({data.handled_today.length})</span>
-          </h2>
-
-          <div className="grid grid-cols-1 gap-3">
-            {data.handled_today.map((issue) => (
-              <div
-                key={issue.id}
-                className="bg-emerald-50/40 border border-emerald-200/80 rounded-xl p-4 flex items-center justify-between"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-xs font-bold text-emerald-800">
-                      ✓ {issue.action?.action_type === 'retry_payment' ? 'Payment Recovery Executed' : issue.action?.action_type === 'create_purchase_order' ? 'Purchase Order Dispatched' : 'Campaign Dispatched'}
-                    </span>
-                    <span className="text-[11px] text-slate-500">
-                      {issue.action?.result?.summary || 'Action completed via Razorpay APIs'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 line-clamp-1">{issue.explanation}</p>
-                </div>
-
-                <div className="text-right shrink-0 pl-4">
-                  <span className="text-[11px] text-slate-500 uppercase block font-semibold">Recovered / Protected</span>
-                  <span className="text-sm font-extrabold text-emerald-700">
-                    {formatPaise(issue.action?.result?.amount_recovered_paise || issue.estimated_impact_paise)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
+            ))
+          )}
         </div>
-      )}
+
+        {/* Right Side: Operational Guardrails & Impact Summary (4 cols on desktop) */}
+        <div className="lg:col-span-4 space-y-3">
+          
+          {/* Revenue at Risk Summary Card */}
+          <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">
+              Active Revenue Exposure
+            </span>
+            <div className="flex items-baseline justify-between">
+              <span className="text-2xl font-black text-slate-900 tracking-tight">
+                {formatPaise(totalRevenueAtRisk)}
+              </span>
+              <span className="text-[11px] font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded border border-rose-100">
+                {(data.active_issues || []).filter(i => i.status !== 'completed').length} Pending
+              </span>
+            </div>
+            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+              Autonomous remediation drafts prepared with Razorpay payment retries and supplier replenishment.
+            </p>
+          </div>
+
+          {/* Autonomous Guardrails Card */}
+          <div className="bg-white rounded-xl border border-slate-200/90 p-4 shadow-sm">
+            <div className="flex items-center space-x-2 mb-2">
+              <ShieldCheck className="w-4 h-4 text-brand-600" />
+              <h3 className="text-xs font-bold text-slate-900 uppercase tracking-wider">
+                Bounded Autonomy Guardrails
+              </h3>
+            </div>
+            
+            <div className="space-y-2 text-xs">
+              <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-600">Spend Authorization Limit:</span>
+                <span className="font-bold text-slate-900">₹10,000 / action</span>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-600">High-Impact POs:</span>
+                <span className="font-bold text-brand-700">Consent Required</span>
+              </div>
+
+              <div className="flex items-center justify-between py-1 border-b border-slate-100">
+                <span className="text-slate-600">Payment Gateway Retries:</span>
+                <span className="font-bold text-emerald-600">Soft-Retry Active</span>
+              </div>
+
+              <div className="flex items-center justify-between py-1">
+                <span className="text-slate-600">Audit Trail:</span>
+                <span className="font-bold text-slate-700">100% Immutable</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Tenant Context Pill */}
+          <div className="bg-slate-100/80 rounded-xl p-3 border border-slate-200/60 text-xs text-slate-600">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-bold text-slate-800 text-[11px]">Active Tenant:</span>
+              <span className="font-mono text-[10px] text-slate-500">{data.merchant.razorpay_account_id || data.merchant.id}</span>
+            </div>
+            <p className="text-[11px] text-slate-500">
+              Isolated order catalog, synthetic anomaly injection, and distinct vendor contracts.
+            </p>
+          </div>
+
+        </div>
+
+      </div>
 
     </div>
   );

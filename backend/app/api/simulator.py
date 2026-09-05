@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime, timezone, timedelta
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from typing import Optional, Dict, Any
@@ -19,11 +19,16 @@ router = APIRouter(prefix="/simulator", tags=["simulator"])
 
 class InjectAnomalyRequest(BaseModel):
     anomaly_type: str
+    merchant_id: Optional[str] = None
     parameters: Optional[Dict[str, Any]] = None
 
 @router.post("/inject-anomaly")
 async def inject_live_anomaly(req: InjectAnomalyRequest, db: Session = Depends(get_db)):
-    merchant = db.query(Merchant).first()
+    merchant = None
+    if req.merchant_id:
+        merchant = db.query(Merchant).filter(Merchant.id == req.merchant_id).first()
+    if not merchant:
+        merchant = db.query(Merchant).first()
     if not merchant:
         raise HTTPException(status_code=404, detail="No merchant found")
 
@@ -89,44 +94,86 @@ async def inject_live_anomaly(req: InjectAnomalyRequest, db: Session = Depends(g
 
         await manager.broadcast("NEW_ANOMALY_DETECTED", {
             "anomaly_type": "Card Payment Outage Wave",
-            "message": "Live Anomaly Injected: 15 Card transactions failed due to Visa network rejection. Autonomous issue drafted!"
+            "merchant_id": m_id,
+            "merchant_name": merchant.name,
+            "message": f"Live Anomaly Injected for {merchant.name}: 15 Card transactions failed. Autonomous issue drafted!"
         })
 
         return {
-            "status": "injected",
-            "anomaly": "Card Payment Failure Wave",
-            "failed_count": 15,
+            "status": "anomaly_injected",
+            "merchant_id": m_id,
+            "anomaly_type": "payment_failure_wave",
             "signal_id": signal.id,
             "issues_created": len(issues)
         }
 
     elif req.anomaly_type == "inventory_stockout":
-        prod = db.query(Product).filter(Product.sku == "PLN-FLF-02").first()
-        if prod:
-            prod.current_stock = 3
+        target_prod = None
+        if merchant.products:
+            # find an item with stock > 10
+            for p in merchant.products:
+                if p.current_stock > 10:
+                    target_prod = p
+                    break
+            if not target_prod:
+                target_prod = merchant.products[0]
+
+        if target_prod:
+            target_prod.current_stock = 3
             db.commit()
 
-        signals = DetectionEngine.run_detection_pipeline(db, m_id)
-        issues = ReasoningEngine.reason_over_signals(db, m_id, signals)
+        fingerprint = f"sig_stockout_{m_id}_{date_str}"
+        prod_name = target_prod.name if target_prod else "Hero SKU"
+        sku_code = target_prod.sku if target_prod else "SKU-HOT-01"
+
+        signal = Signal(
+            id=str(uuid.uuid4()),
+            merchant_id=m_id,
+            signal_type="stock_depletion_risk",
+            dimensions={
+                "product_id": target_prod.id if target_prod else str(uuid.uuid4()),
+                "sku": sku_code,
+                "product_name": prod_name,
+                "current_stock": 3,
+                "daily_burn_rate": 4.2,
+                "days_until_stockout": 0.7,
+                "lead_time_days": 7,
+                "estimated_impact_paise": 4500000
+            },
+            baseline_value=30.0,
+            observed_value=3.0,
+            confidence=0.9900,
+            fingerprint=fingerprint,
+            detected_at=now
+        )
+        db.add(signal)
+        db.commit()
+
+        issues = ReasoningEngine.reason_over_signals(db, m_id, [signal])
         ActionPlanner.plan_actions_for_issues(db, m_id, issues)
 
         await manager.broadcast("NEW_ANOMALY_DETECTED", {
-            "anomaly_type": "Fiddle Leaf Fig Stock Depletion",
-            "message": "Live Anomaly Injected: Stock dropped to 3 units. Purchase order draft generated!"
+            "anomaly_type": "Critical Stockout Depletion",
+            "merchant_id": m_id,
+            "merchant_name": merchant.name,
+            "message": f"Inventory Alert for {merchant.name}: '{prod_name}' depleted to 3 units. Supplier PO prepared!"
         })
 
         return {
-            "status": "injected",
-            "anomaly": "Fiddle Leaf Fig Stockout Risk",
-            "stock_remaining": 3
+            "status": "anomaly_injected",
+            "merchant_id": m_id,
+            "anomaly_type": "inventory_stockout",
+            "signal_id": signal.id,
+            "issues_created": len(issues)
         }
 
-    return {"status": "unknown_anomaly_type"}
+    else:
+        raise HTTPException(status_code=400, detail=f"Unsupported anomaly_type: {req.anomaly_type}")
 
 @router.post("/reset")
-def reset_database_and_seed(db: Session = Depends(get_db)):
+def reset_demo_data(db: Session = Depends(get_db)):
     """
-    Clears current tables and regenerates synthetic dataset and ground truth.
+    Resets the database and reseeds all 3 multi-tenant businesses.
     """
     db.query(GroundTruthLabel).delete()
     db.query(AuditLog).delete()
@@ -143,33 +190,47 @@ def reset_database_and_seed(db: Session = Depends(get_db)):
     db.query(Merchant).delete()
     db.commit()
 
-    merchant_id = seed_synthetic_merchant_data(db)
-    signals = DetectionEngine.run_detection_pipeline(db, merchant_id)
-    issues = ReasoningEngine.reason_over_signals(db, merchant_id, signals)
-    actions = ActionPlanner.plan_actions_for_issues(db, merchant_id, issues)
+    primary_id = seed_synthetic_merchant_data(db)
+    
+    # Count totals across all merchants
+    signals_count = db.query(Signal).count()
+    issues_count = db.query(Issue).count()
+    actions_count = db.query(Action).count()
 
     return {
         "status": "reset_successful",
-        "merchant_id": merchant_id,
-        "signals_count": len(signals),
-        "issues_count": len(issues),
-        "actions_count": len(actions)
+        "primary_merchant_id": primary_id,
+        "signals_count": signals_count,
+        "issues_count": issues_count,
+        "actions_count": actions_count
     }
 
 @router.post("/run-pipeline")
-def run_pipeline_manual(db: Session = Depends(get_db)):
-    merchant = db.query(Merchant).first()
-    if not merchant:
-        seed_synthetic_merchant_data(db)
-        merchant = db.query(Merchant).first()
+def run_pipeline_manual(merchant_id: Optional[str] = Query(None), db: Session = Depends(get_db)):
+    merchants = []
+    if merchant_id:
+        m = db.query(Merchant).filter(Merchant.id == merchant_id).first()
+        if m:
+            merchants = [m]
+    if not merchants:
+        merchants = db.query(Merchant).all()
 
-    signals = DetectionEngine.run_detection_pipeline(db, merchant.id)
-    issues = ReasoningEngine.reason_over_signals(db, merchant.id, signals)
-    actions = ActionPlanner.plan_actions_for_issues(db, merchant.id, issues)
+    total_signals = 0
+    total_issues = 0
+    total_actions = 0
+
+    for m in merchants:
+        signals = DetectionEngine.run_detection_pipeline(db, m.id)
+        issues = ReasoningEngine.reason_over_signals(db, m.id, signals)
+        actions = ActionPlanner.plan_actions_for_issues(db, m.id, issues)
+        total_signals += len(signals)
+        total_issues += len(issues)
+        total_actions += len(actions)
 
     return {
         "status": "pipeline_completed",
-        "signals": len(signals),
-        "issues": len(issues),
-        "actions": len(actions)
+        "merchants_processed": len(merchants),
+        "signals": total_signals,
+        "issues": total_issues,
+        "actions": total_actions
     }

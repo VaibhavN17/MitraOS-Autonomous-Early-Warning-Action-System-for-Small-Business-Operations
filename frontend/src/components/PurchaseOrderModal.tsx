@@ -20,9 +20,9 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
   const [quantity, setQuantity] = useState<number>(initialParams.quantity || 70);
   const unitCostPaise = initialParams.unit_cost_paise || 65000;
-  const supplierName = initialParams.supplier_name || 'Mysore Exotic Flora Supplies';
-  const sku = initialParams.sku || 'PLN-MON-01';
-  const productName = initialParams.product_name || 'Monstera Deliciosa (Large)';
+  const supplierName = initialParams.supplier_name || 'Authorized Regional Vendor Network';
+  const sku = initialParams.sku || 'HERO-SKU-01';
+  const productName = initialParams.product_name || 'Target Inventory SKU';
 
   const totalCostPaise = quantity * unitCostPaise;
   const preventedRevenuePaise = issue.estimated_impact_paise;
@@ -43,104 +43,112 @@ export const PurchaseOrderModal: React.FC<PurchaseOrderModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="bg-white rounded-2xl max-w-lg w-full shadow-modal border border-slate-200 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+        <div className="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/70">
           <div>
-            <span className="text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-0.5 rounded-full">
+            <span className="text-xs font-bold text-amber-800 bg-amber-100 px-3 py-1 rounded-full">
               DRAFT PURCHASE ORDER
             </span>
-            <h2 className="text-lg font-bold text-slate-900 mt-1">
+            <h2 className="text-lg font-extrabold text-slate-900 mt-1.5">
               Restock Purchase Order Review
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-2 rounded-lg hover:bg-slate-100 transition-colors"
+            className="text-slate-400 hover:text-slate-700 p-2 rounded-xl hover:bg-slate-100 transition-colors"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
           
           {/* Supplier and SKU Meta */}
-          <div className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-2 text-xs">
+          <div className="bg-slate-50 border border-slate-200/70 rounded-xl p-4 space-y-2.5 text-xs">
             <div className="flex items-center justify-between text-slate-600">
               <span className="flex items-center space-x-1.5 font-medium">
-                <Truck className="w-3.5 h-3.5 text-brand-600" />
+                <Truck className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Supplier Partner:</span>
               </span>
               <span className="font-bold text-slate-900">{supplierName}</span>
             </div>
 
-            <div className="flex items-center justify-between text-slate-600">
+            <div className="flex items-center justify-between text-slate-600 border-t border-slate-200/50 pt-2">
               <span className="flex items-center space-x-1.5 font-medium">
-                <Package className="w-3.5 h-3.5 text-brand-600" />
+                <Package className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Product / SKU:</span>
               </span>
               <span className="font-bold text-slate-900">{productName} ({sku})</span>
             </div>
 
-            <div className="flex items-center justify-between text-slate-600">
+            <div className="flex items-center justify-between text-slate-600 border-t border-slate-200/50 pt-2">
               <span className="flex items-center space-x-1.5 font-medium">
                 <Clock className="w-3.5 h-3.5 text-amber-600" />
-                <span>Lead Time vs Runway:</span>
+                <span>Supplier Lead Time:</span>
               </span>
-              <span className="font-bold text-amber-700">4 Days Stock Left vs 7 Days Lead Time</span>
+              <span className="font-bold text-amber-700">{initialParams.supplier_lead_time_days || 7} Days</span>
             </div>
           </div>
 
-          {/* Editable Quantity */}
+          {/* Editable Quantity Field */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
               Order Quantity (Units)
             </label>
-            <div className="flex items-center space-x-3">
-              <input
-                type="number"
-                min="10"
-                max="500"
-                step="5"
-                value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 0))}
-                className="block w-32 px-3.5 py-2 text-sm font-bold bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-500 focus:border-brand-500"
-              />
-              <span className="text-xs text-slate-500 font-medium">
-                @ {formatPaise(unitCostPaise)} per unit wholesale
+            <input
+              type="number"
+              min={1}
+              max={1000}
+              value={quantity}
+              onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              className="w-full text-base font-extrabold border border-slate-300 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-indigo-500 font-mono"
+            />
+            <p className="text-xs text-slate-500 mt-1.5">
+              Unit Wholesale Cost: <strong>{formatPaise(unitCostPaise)}</strong>
+            </p>
+          </div>
+
+          {/* Impact Comparison Box */}
+          <div className="grid grid-cols-2 gap-3 bg-indigo-50/50 border border-indigo-100 rounded-xl p-4 text-xs">
+            <div>
+              <span className="text-slate-500 block uppercase font-medium text-[10px]">Total Purchase Cost</span>
+              <span className="text-base font-extrabold text-slate-900 block mt-0.5">
+                {formatPaise(totalCostPaise)}
+              </span>
+            </div>
+            <div className="border-l border-indigo-100 pl-3">
+              <span className="text-slate-500 block uppercase font-medium text-[10px]">Revenue Protected</span>
+              <span className="text-base font-extrabold text-emerald-700 block mt-0.5">
+                {formatPaise(preventedRevenuePaise)}
               </span>
             </div>
           </div>
 
-          {/* Calculated Cost & Revenue Protected Breakdown */}
-          <div className="border-t border-slate-100 pt-4 space-y-2 text-xs">
-            <div className="flex items-center justify-between text-slate-600">
-              <span>Total Estimated Purchase Order Cost:</span>
-              <span className="text-sm font-extrabold text-slate-900">{formatPaise(totalCostPaise)}</span>
-            </div>
-
-            <div className="flex items-center justify-between text-emerald-700 font-semibold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
-              <span>Projected Lost Revenue Protected:</span>
-              <span className="text-sm font-extrabold text-emerald-900">{formatPaise(preventedRevenuePaise)}</span>
-            </div>
+          {/* Autonomy Transparency Callout */}
+          <div className="flex items-start space-x-2 text-xs text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-200">
+            <ShieldCheck className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
+            <p>
+              <strong>Bounded Policy Gate:</strong> This PO exceeds the auto-spend policy threshold (₹10,000). Nothing is dispatched to vendor until you approve.
+            </p>
           </div>
 
-          {/* Footer Controls */}
+          {/* Buttons */}
           <div className="flex items-center justify-end space-x-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2.5 rounded-xl text-xs font-bold text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="inline-flex items-center space-x-1.5 px-4 py-2 text-xs font-bold bg-brand-500 hover:bg-brand-600 text-white rounded-lg shadow transition-all active:scale-95"
+              className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs font-bold bg-slate-900 hover:bg-indigo-600 text-white shadow-sm transition-all active:scale-95"
             >
-              <span>Approve & Place PO</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <span>Approve & Dispatch PO</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
 
